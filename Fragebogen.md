@@ -33,7 +33,7 @@ Lizenztyp: [MIT](https://github.com/HeinrichderAchte/BiletadoApiWebEng/blob/mast
 | FW-Version                            | 9                                             |
 | Website zum FW                        | [ASP.NET](https://dotnet.microsoft.com/en-us/apps/aspnet)                 |
 | Prepared statements/ORM               | Entity Framework Core                              |
-| ORM Version                           | 2.13                                               |
+| ORM Version                           | 9.0.10                                               |
 | Website zum ORM                       | [nuget](https://www.nuget.org/packages/microsoft.entityframeworkcore) |
 
 ## geplante Automatisierung

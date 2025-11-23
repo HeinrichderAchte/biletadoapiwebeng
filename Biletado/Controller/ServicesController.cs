@@ -6,6 +6,13 @@ namespace Biletado.Controller;
 [ApiController]
 public class ServicesController : ControllerBase
 {
+    private readonly AssetsDbContext _assetsDb;
+    
+    public ServicesController(AssetsDbContext assetsDb)
+    {
+        _assetsDb = assetsDb;
+    }
+    
     [HttpGet("status")]
     public IActionResult GetStatus()
     {
@@ -16,9 +23,32 @@ public class ServicesController : ControllerBase
         });
     }
     [HttpGet("health")]
-    public IActionResult GetHealth()
+    public async Task <IActionResult> GetHealth()
     {
-        return Ok();
+        bool assetsConnected = false;
+        try
+        {
+            assetsConnected = await _assetsDb.Database.CanConnectAsync();
+
+        }
+        catch
+        {
+            assetsConnected = false;
+        }
+
+        var result = new
+        {
+            live = true,
+            ready = assetsConnected,
+            databases = new
+            {
+                assets = new
+                {
+                    connected = assetsConnected
+                }
+            }
+        };
+        return Ok(result);
     }
     [HttpGet("health/live")]
     public IActionResult GetHealthLive()

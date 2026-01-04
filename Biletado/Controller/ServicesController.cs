@@ -19,9 +19,10 @@ public class ServicesController : ControllerBase
         return Ok(new
         {
             authors= new[]{"Henri Weber", "Vivian Heidt"},
-            api_version="3.0.0",
+            api_version="1.0.0",
         });
     }
+    
     [HttpGet("health")]
     public async Task <IActionResult> GetHealth()
     {
@@ -50,14 +51,35 @@ public class ServicesController : ControllerBase
         };
         return Ok(result);
     }
+    
     [HttpGet("health/live")]
     public IActionResult GetHealthLive()
     {
-        return Accepted();
+        var result = new
+        {
+            live = true
+        };
+        return Ok(result);
     }
-    [HttpGet("healt/ready")]
-    public IActionResult GetHealtReady()
+    
+    [HttpGet("health/ready")]
+    public async Task <IActionResult> GetHealtReady()
     {
-        return Ok();
+        bool assetsConnected = false;
+        try
+        {
+            assetsConnected = await _assetsDb.Database.CanConnectAsync();
+
+        }
+        catch
+        {
+            assetsConnected = false;
+        }
+
+        var result = new
+        {
+            live = assetsConnected
+        };
+        return Ok(result); 
     }
 }

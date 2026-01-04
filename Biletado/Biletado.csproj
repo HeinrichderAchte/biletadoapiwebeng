@@ -5,6 +5,9 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <!-- Enable XML doc file so Swagger can include <summary> comments -->
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <NoWarn>$(NoWarn);1591</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>
@@ -12,6 +15,14 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.11" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
+        <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.4.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.11" />
+        <!-- Serilog for structured logging and ECS formatting -->
+        <PackageReference Include="Serilog.AspNetCore" Version="2.0.0" />
+        <PackageReference Include="Serilog.Sinks.Console" Version="2.0.0" />
+        <PackageReference Include="Serilog.Settings.Configuration" Version="2.0.0" />
+        <PackageReference Include="Elastic.CommonSchema.Serilog" Version="1.4.0" />
+        <PackageReference Include="Serilog.Enrichers.Environment" Version="2.0.0" />
     </ItemGroup>
 
     <ItemGroup>

@@ -1,11 +1,17 @@
-﻿using Biletado.Models;
+﻿using Microsoft.EntityFrameworkCore;
+using Biletado.Models;
 
 namespace Biletado;
-using Microsoft.EntityFrameworkCore;
 
-
-public class ReservationsDbContext(DbContextOptions<ReservationsDbContext> options) : DbContext(options)
+public class ReservationsDbContext : DbContext
 {
+    public ReservationsDbContext(DbContextOptions<ReservationsDbContext> options)
+        : base(options)
+    {
+    }
+
+    public DbSet<Reservation> Reservations { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("public");
@@ -21,7 +27,5 @@ public class ReservationsDbContext(DbContextOptions<ReservationsDbContext> optio
             r.Property(x => x.roomId).HasColumnName("room_id");
             r.Property(x => x.deletedAt).HasColumnName("deleted_at");
         });
-
-        
-    }    
+    }
 }

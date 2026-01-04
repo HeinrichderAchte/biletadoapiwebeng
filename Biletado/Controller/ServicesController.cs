@@ -7,12 +7,12 @@ namespace Biletado.Controller;
 public class ServicesController : ControllerBase
 {
     private readonly AssetsDbContext _assetsDb;
-    
+
     public ServicesController(AssetsDbContext assetsDb)
     {
         _assetsDb = assetsDb;
     }
-    
+
     [HttpGet("status")]
     public IActionResult GetStatus()
     {
@@ -22,7 +22,7 @@ public class ServicesController : ControllerBase
             api_version="1.0.0",
         });
     }
-    
+
     [HttpGet("health")]
     public async Task <IActionResult> GetHealth()
     {
@@ -51,7 +51,7 @@ public class ServicesController : ControllerBase
         };
         return Ok(result);
     }
-    
+
     [HttpGet("health/live")]
     public IActionResult GetHealthLive()
     {
@@ -61,7 +61,7 @@ public class ServicesController : ControllerBase
         };
         return Ok(result);
     }
-    
+
     [HttpGet("health/ready")]
     public async Task <IActionResult> GetHealtReady()
     {
@@ -78,8 +78,8 @@ public class ServicesController : ControllerBase
 
         var result = new
         {
-            live = assetsConnected
+            ready = assetsConnected
         };
-        return Ok(result); 
+        return Ok(result);
     }
 }

@@ -4,10 +4,10 @@ namespace Biletado.Models;
 
 public class Reservation
 {
-    public Guid reservationId;
-    public DateOnly? fromDate;
-    public DateOnly? toDate;
-    public Guid? roomId;
-    public DateTime? deletedAt;
+    public Guid reservationId { get; set; }
+    public DateOnly? fromDate { get; set; }
+    public DateOnly? toDate { get; set; }
+    public Guid? roomId { get; set; }
+    public DateTime? deletedAt { get; set; }
 
 }

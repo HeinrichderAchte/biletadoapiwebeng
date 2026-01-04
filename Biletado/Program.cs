@@ -22,7 +22,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-
+//useless comment 
 
 app.UseHttpsRedirection();
 app.MapControllers();

@@ -62,9 +62,19 @@ jobs:
       - name: Publish app
         run: dotnet publish -c Release -o publish
 
+      # yaml
       - name: Copy Dockerfile into publish
-        run: cp ./Dockerfile publish/
-
+        run: |
+          set -e
+          DOCKERFILE=$(find . -maxdepth 4 -type f -name Dockerfile | head -n1 || true)
+          if [ -z "$DOCKERFILE" ]; then
+            echo "Dockerfile nicht gefunden. Lege `Dockerfile` in Repo-Root oder passe den Pfad im Workflow an." >&2
+            exit 1
+          fi
+          cp "$DOCKERFILE" publish/
+          echo "Copied $DOCKERFILE to publish/"
+      
+      
       - name: Upload published artifact
         uses: actions/upload-artifact@v4
         with:

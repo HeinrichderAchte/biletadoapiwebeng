@@ -53,7 +53,7 @@ public class ServicesController : ControllerBase
     [HttpGet("health/live")]
     public IActionResult GetHealthLive()
     {
-        return Ok();
+        return Accepted();
     }
     [HttpGet("healt/ready")]
     public IActionResult GetHealtReady()

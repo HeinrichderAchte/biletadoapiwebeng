@@ -32,9 +32,9 @@ public class ReservationsOperationFilter : IOperationFilter
         }
 
         SetParam("include_deleted", "Set this `true` to include deleted reservations. Not set or anything else does not return deleted reservations.", new OpenApiBoolean(false));
-        SetParam("room_id", "filter the returned reservation by the given room", new OpenApiString("510dcb67-36f6-4c1c-9133-1072c31efb92"));
-        SetParam("before", "filter for reservations where `query:before > reservation:from` (use ISO date format, e.g. 2025-12-01)", new OpenApiString("2025-12-01"), "date");
-        SetParam("after", "filter for reservations where `query:after < reservation:to` (use ISO date format, e.g. 2025-12-01)", new OpenApiString("2025-12-02"), "date");
+        SetParam("room_id", "filter the returned reservation by the given room", new OpenApiString(""));
+        SetParam("before", "filter for reservations where `query:before > reservation:from` (use ISO date format, e.g. 2025-12-01)", new OpenApiString(""), "date");
+        SetParam("after", "filter for reservations where `query:after < reservation:to` (use ISO date format, e.g. 2025-12-01)", new OpenApiString(""), "date");
     }
 }
 

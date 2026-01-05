@@ -117,9 +117,9 @@ public class ReservationsController : ControllerBase
 
     
 
-    [HttpGet("{id}")]
+    [HttpGet("{id:guid}")]
     [AllowAnonymous]
-    public async Task<IActionResult> GetReservationById(Guid id)
+    public async Task<IActionResult> GetReservationById([FromRoute]Guid id)
     {
         var res = await _db.Reservations.FindAsync(id);
         if (res == null) return NotFound();

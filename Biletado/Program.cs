@@ -9,6 +9,12 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Enable detailed IdentityModel error messages in Development for debugging token issues
+if (builder.Environment.IsDevelopment())
+{
+    Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
+}
+
 // Setup Serilog early so startup logs are captured
 var serilogConfig = new LoggerConfiguration()
     .Enrich.FromLogContext()
@@ -47,6 +53,9 @@ builder.Services.AddSwaggerGen(c =>
 
     // register enum schema filter so enums are displayed as string names in Swagger
     c.SchemaFilter<EnumSchemaFilter>();
+
+    // register uuid parameter filter to relax the pattern to accept upper-case hex
+    c.OperationFilter<UuidParameterFilter>();
 
     // Only add Swagger JWT security when auth is enabled
     if (authEnabled)
@@ -96,10 +105,14 @@ if (authEnabled)
         // Accept tokens from the authority; for local dev set RequireHttpsMetadata=false if needed
         options.RequireHttpsMetadata = builder.Configuration.GetValue<bool?>("Authentication:RequireHttpsMetadata") ?? true;
 
+        // read allowed audiences from configuration (optional)
+        var allowedAudiences = builder.Configuration.GetSection("Authentication:ValidAudiences").Get<string[]>() ?? new[] { audience };
+
         options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
         {
             NameClaimType = "preferred_username",
-            RoleClaimType = "roles"
+            RoleClaimType = "roles",
+            ValidAudiences = allowedAudiences
         };
 
         // Optional: add events for helpful debugging

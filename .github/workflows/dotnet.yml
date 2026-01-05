@@ -98,3 +98,17 @@ jobs:
           tags: |
             ghcr.io/${{ env.OWNER }}/biletado:${{ github.sha }}
             ghcr.io/${{ env.OWNER }}/biletado:latest
+            
+  deploy:
+    needs: image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kubernetes Context setzten
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+
+      - name: Update Image in Deployment
+        run: |
+          kubectl set image deployment/reservations reservations-container=ghcr.io/${{ env.OWNER }}/biletado:${{ github.sha }} -n biletado

@@ -103,12 +103,24 @@ jobs:
     needs: image
     runs-on: ubuntu-latest
     steps:
-      - name: Kubernetes Context setzten
+      # 1. Wir müssen OWNER hier erneut setzen, da Jobs isoliert laufen
+      - name: Set OWNER lowercase
+        shell: bash
+        run: |
+          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
+          echo "OWNER=$OWNER" >> $GITHUB_ENV
+      
+      # 2. Verbindung zum Cluster herstellen
+      - name: Kubernetes Context setzen
         uses: azure/k8s-set-context@v3
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBE_CONFIG }}
-
-      - name: Update Image in Deployment
+      
+      # 3. Image im Deployment aktualisieren und Restart erzwingen
+      - name: Update Image and Restart
         run: |
+          # Wir setzen explizit das neue Image mit dem SHA-Tag, 
+          # das triggert den Rollout zuverlässiger als nur ein Restart
+          kubectl set image deployment/reservations reservations=ghcr.io/${{ env.OWNER }}/biletado:${{ github.sha }}
           kubectl rollout restart deployment/reservations

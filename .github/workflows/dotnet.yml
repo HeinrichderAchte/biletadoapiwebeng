@@ -111,4 +111,4 @@ jobs:
 
       - name: Update Image in Deployment
         run: |
-          kubectl set image deployment/reservations reservations-container=ghcr.io/${{ env.OWNER }}/biletado:${{ github.sha }} -n biletado
+          kubectl rollout restart deployment/reservations

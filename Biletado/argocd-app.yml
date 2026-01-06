@@ -8,6 +8,7 @@ metadata:
     argocd-image-updater.argoproj.io/my-api.update-strategy: digest
     argocd-image-updater.argoproj.io/my-api.pull-secret: secret:argocd/ghcr-token#token 
     argocd-image-updater.argoproj.io/write-back-method: git
+    argocd-image-updater.argoproj.io/managed-by: argocd
 spec:
   project: default
   source:

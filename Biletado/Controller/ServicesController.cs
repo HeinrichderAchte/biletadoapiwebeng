@@ -19,7 +19,7 @@ public class ServicesController : ControllerBase
         return Ok(new
         {
             authors= new[]{"Henri Weber", "Vivian Heidt"},
-            api_version="1.0.6",
+            api_version="1.0.7",
         });
     }
 

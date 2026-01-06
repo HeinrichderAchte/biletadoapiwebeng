@@ -45,8 +45,8 @@ jobs:
           fi
           cp "$DOCKERFILE" publish/
           echo "Copied $DOCKERFILE to publish/"
-      
-      
+
+
       - name: Upload published artifact
         uses: actions/upload-artifact@v4
         with:
@@ -64,7 +64,7 @@ jobs:
         with:
           name: app-publish
           path: publish
-          
+
       - name: Set OWNER lowercase
         shell: bash
         run: |

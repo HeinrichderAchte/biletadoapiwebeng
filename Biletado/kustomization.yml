@@ -12,7 +12,6 @@ patches:
       - op: replace
         path: /spec/template/spec/containers/0/imagePullPolicy
         value: Always
-
     target:
       group: apps
       version: v1

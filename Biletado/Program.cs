@@ -86,6 +86,8 @@ if (authEnabled)
 {
     var authority = builder.Configuration["Authentication:Authority"];
     var audience = builder.Configuration["Authentication:Audience"];
+    var metadataAddress = builder.Configuration["Authentication:MetadataAddress"];
+    var validIssuer = builder.Configuration["Authentication:ValidIssuer"];
 
     if (string.IsNullOrWhiteSpace(authority) || string.IsNullOrWhiteSpace(audience))
     {
@@ -102,6 +104,11 @@ if (authEnabled)
     {
         options.Authority = authority;
         options.Audience = audience;
+        
+        if (!string.IsNullOrEmpty(metadataAddress))
+        {
+            options.MetadataAddress = metadataAddress;
+        }
         // Accept tokens from the authority; for local dev set RequireHttpsMetadata=false if needed
         options.RequireHttpsMetadata = builder.Configuration.GetValue<bool?>("Authentication:RequireHttpsMetadata") ?? true;
 
@@ -112,7 +119,9 @@ if (authEnabled)
         {
             NameClaimType = "preferred_username",
             RoleClaimType = "roles",
-            ValidAudiences = allowedAudiences
+            ValidAudiences = allowedAudiences,
+            ValidateIssuer = !string.IsNullOrEmpty(validIssuer),
+            ValidIssuer = validIssuer
         };
 
         // Optional: add events for helpful debugging

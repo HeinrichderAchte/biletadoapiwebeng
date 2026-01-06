@@ -26,14 +26,7 @@ public class ReservationsController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
-    /// Liefert alle Reservierungen (mit optionalen Filtern).
-    /// </summary>
-    /// <remarks>If include_deleted is set to true, deleted reservations will be included.</remarks>
-    /// <param name="includeDeleted">Set this true to include deleted reservations.</param>
-    /// <param name="roomId">Filter the returned reservation by the given room (UUID).</param>
-    /// <param name="before">Filter for reservations where reservation.from &lt; before (ISO date).</param>
-    /// <param name="after">Filter for reservations where reservation.to &gt; after (ISO date).</param>
+
     [HttpGet]
     [AllowAnonymous]
     [SwaggerOperation(Summary = "List reservations", Description = "List reservations with optional filters. If include_deleted=true, deleted reservations are included.")]
@@ -46,7 +39,6 @@ public class ReservationsController : ControllerBase
     {
         try
         {
-            // convert before/after to DateOnly constants outside the EF expression so EF can translate comparisons
             DateOnly? beforeDate = before.HasValue ? DateOnly.FromDateTime(before.Value) : (DateOnly?)null;
             DateOnly? afterDate = after.HasValue ? DateOnly.FromDateTime(after.Value) : (DateOnly?)null;
 
@@ -125,13 +117,7 @@ public class ReservationsController : ControllerBase
         if (res == null) return NotFound();
         return Ok(res);
     }
-
-    /// <summary>
-    /// Update a reservation: replace fields or restore a deleted reservation.
-    /// </summary>
-    /// <param name="id">Reservation id</param>
-    /// <param name="action">Action to perform: 'Replace' (default) or 'Restore' to undelete</param>
-    /// <param name="reservation">Reservation body for replace action (required when action=Replace)</param>
+    
     [HttpPut("{id}")]
     [Authorize]
     [SwaggerOperation(Summary = "Update or restore a reservation")]

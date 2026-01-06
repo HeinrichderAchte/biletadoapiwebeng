@@ -135,10 +135,8 @@ if (authEnabled)
 }
 else
 {
-    // Authentication disabled central - do not register auth services here (we may register DevAuth below for Development)
     Console.WriteLine("Authentication disabled via configuration (Authentication:Enabled=false)");
-
-    // If we're in Development, register a simple DevAuth scheme as default so [Authorize] works without real tokens
+    
     if (builder.Environment.IsDevelopment())
     {
         builder.Services.AddAuthentication(options =>

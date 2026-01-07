@@ -5,6 +5,7 @@ using Biletado.Repository.Swagger;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
+using Biletado.Repository.DevAuth;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -147,30 +148,25 @@ if (authEnabled)
 else
 {
     Console.WriteLine("Authentication disabled via configuration (Authentication:Enabled=false)");
-    
-    if (isDevelopement)
-    {
-        builder.Services.AddAuthentication(options =>
-        {
-            options.DefaultAuthenticateScheme = "DevAuth";
-            options.DefaultChallengeScheme = "DevAuth";
-            options.DefaultScheme = "DevAuth";
-        })
-        .AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, Biletado.Repository.DevAuth.DevAuthHandler>("DevAuth", options => { });
 
-        builder.Services.AddAuthorization();
-        Console.WriteLine("DevAuth registered as default authentication scheme for Development.");
-    }
-    else
-    {
-        builder.Services.AddAuthorization(options =>
+    // Fallback No-op auth scheme, verhindert 'No authenticationScheme was specified' Fehler
+    builder.Services.AddAuthentication(options =>
         {
-            options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
-                .RequireAssertion(_ => true)
-                .Build();
-        });
-        Console.WriteLine("Authorization fallback policy set to allow all (auth disabled).");
-    }
+            options.DefaultAuthenticateScheme = "NoAuth";
+            options.DefaultChallengeScheme = "NoAuth";
+            options.DefaultScheme = "NoAuth";
+        })
+        .AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, NoAuthHandler>("NoAuth", options => { });
+
+    // Optional: erlaubende Fallback-Policy (sorgt dafür, dass [Authorize] nicht blockiert)
+    builder.Services.AddAuthorization(options =>
+    {
+        options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
+            .RequireAssertion(_ => true)
+            .Build();
+    });
+
+    Console.WriteLine("NoAuth registered as default authentication scheme (auth disabled).");
 }
 
 builder.Services.AddDbContext<AssetsDbContext>(options=>options.UseNpgsql(builder.Configuration.GetConnectionString("AssetsConnection")));
@@ -206,7 +202,8 @@ if (authEnabled || isDevelopement)
 }
 
 app.MapControllers();
-
-
+app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 app.Run();
 

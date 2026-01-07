@@ -49,7 +49,7 @@ public class ServicesController : ControllerBase
 
         if (assetsConnected)
         {
-            _logger.LogInformation("Reservations Database connection established."); 
+            _logger.LogInformation("Reservations Database is ready."); 
             var result = new
             {
                 live = true,
@@ -105,6 +105,7 @@ public class ServicesController : ControllerBase
 
         if (assetsConnected)
         {
+            _logger.LogInformation("Reservations Database connection established.");
             var result = new
             {
                 ready = true

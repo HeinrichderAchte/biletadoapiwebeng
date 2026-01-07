@@ -23,13 +23,12 @@ public class ReservationsController : ControllerBase
     public ReservationsController(ReservationsDbContext db, ILogger<ReservationsController> logger)
     {
         _db = db;
-        _logger = logger;
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
 
     [HttpGet]
     [AllowAnonymous]
-    [SwaggerOperation(Summary = "List reservations", Description = "List reservations with optional filters. If include_deleted=true, deleted reservations are included.")]
     public async Task <IActionResult> GetAllReservations(
         [FromQuery(Name = "include_deleted")] [SwaggerParameter("Set this true to include deleted reservations.")] bool includeDeleted = false,
         [FromQuery(Name = "room_id")] [SwaggerParameter("Filter the returned reservation by the given room (UUID). ")] Guid? roomId = null,

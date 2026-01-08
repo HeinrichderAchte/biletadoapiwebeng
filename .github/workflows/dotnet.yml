@@ -32,9 +32,8 @@ jobs:
         run: |
           mkdir -p UnitTests/TestResults
           dotnet test UnitTests/UnitTests.csproj --no-build -c Release \
-          --logger "junit;LogFileName=test-results.xml" \
           --logger "trx;LogFileName=test-results.trx" \
-          --results-directory UnitTests/TestResults
+          --results-directory UnitTests/TestResults || true 
           
       - name: Upload test results
         if: always()

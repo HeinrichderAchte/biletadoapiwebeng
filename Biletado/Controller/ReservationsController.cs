@@ -70,7 +70,6 @@ public class ReservationsController : ControllerBase
         }
         catch (System.InvalidOperationException ex)
         {
-            // Typical for missing connection string
             _logger.LogError(ex, "Database operation failed (likely missing connection string)");
             return StatusCode(503, new { error = "Database not configured or unreachable", detail = ex.Message });
         }

@@ -29,12 +29,23 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Test
-        run: dotnet test --no-build --verbosity normal
+        run: |
+          mkdir -p UnitTest/TestResults
+          dotnet test UnitTest/UnitTests.csproj --no-build -c Release \
+          --logger "junit;LogFileName=test-results.xml" \
+          --logger "trx;LogFileName=test-results.trx" \
+          --results-directory UnitTests/TestResults
+          
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: UnitTests/TestResults
 
       - name: Publish app
         run: dotnet publish -c Release -o publish
 
-      # yaml
       - name: Copy Dockerfile into publish
         run: |
           set -e

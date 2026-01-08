@@ -37,4 +37,9 @@
       <Folder Include="Services\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Biletado.Tests\obj\Biletado.Tests.csproj.nuget.dgspec.json" />
+      <_ContentIncludedByDefault Remove="Biletado.Tests\obj\project.assets.json" />
+    </ItemGroup>
+
 </Project>

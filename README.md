@@ -15,7 +15,7 @@ Service-Port: **9000**\
 Autoren: Henri Weber; Vivian Heidt
 Lizenz: MIT (siehe LICENSE)
 
-Ziel der Abgabe ist, dass die API als **Container lauffaehig** ist, sich
+Ziel der Abgabe ist, dass die API als **Container lauffähig** ist, sich
 in die bereitgestellte Kubernetes-Umgebung integrieren laesst und wie
 spezifiziert reagiert.
 

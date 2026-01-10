@@ -117,6 +117,25 @@ public class ReservationsController : ControllerBase
                 {
                     errors.Add(new ErrorDetail("bad_request", $"roomId {reservation.roomId} does not exist."));
                 }
+                else
+                {
+                    var from = reservation.fromDate;
+                    var to = reservation.toDate;
+                    if (from.HasValue && to.HasValue)
+                    {
+                        var overlapExists = await _db.Reservations.AnyAsync(r =>
+                            r.deletedAt == null &&
+                            r.roomId == reservation.roomId &&
+                            r.fromDate.HasValue && r.toDate.HasValue &&
+                            !(r.toDate.Value < from.Value || r.fromDate.Value > to.Value)
+                        );
+
+                        if (overlapExists)
+                        {
+                            errors.Add(new ErrorDetail("conflict", "Reservation already exists"));
+                        }
+                    }
+                }
             }
             if (errors.Count > 0)
             {
@@ -126,7 +145,7 @@ public class ReservationsController : ControllerBase
             await _db.Reservations.AddAsync(reservation);
             await _db.SaveChangesAsync();
 
-            // Audit log
+            
             var userId = User.Identity?.Name ?? "anonymous";
             _logger.LogInformation("Audit: Operation={Operation} ObjectType={ObjectType} ObjectId={ObjectId} UserId={UserId}", "Create", "Reservation", reservation.reservationId, userId);
             

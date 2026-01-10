@@ -181,7 +181,6 @@ public class ReservationsController : ControllerBase
         [FromQuery(Name = "action")] [SwaggerParameter("Action to perform: 'Replace' (default) or 'Restore' to undelete")] ActionType action = ActionType.Replace,
         [FromBody] JsonElement? body = null)
     {
-        
         var rawAction = HttpContext.Request.Query["action"].FirstOrDefault();
     _logger.LogInformation("UpdateReservation called. BoundAction={BoundAction} RawQueryAction={RawAction} BodyPresent={BodyPresent}", action, rawAction, body.HasValue);
 
@@ -204,31 +203,30 @@ public class ReservationsController : ControllerBase
         }
     }
 
-    // Restore: ?action=Restore OR explicit "deletedAt" present in body (presence => restore)
+    // Treat presence of deletedAt as Restore signal only if the reservation exists.
+    // If it doesn't exist, fall through to create/replace path so a new reservation can be created.
     if (action == ActionType.Restore || bodyHasDeletedAt)
     {
-        if (existing == null) return NotFound();
-
-        if (existing.deletedAt == null)
+        if (existing != null)
         {
-            return BadRequest(new { error = "Reservation is not deleted, cannot restore" });
-        }
+            // idempotent: set deletedAt to null (restore) and return the restored entity
+            existing.deletedAt = null;
+            _db.Entry(existing).Property(e => e.deletedAt).IsModified = true;
 
-        existing.deletedAt = null;
-        _db.Entry(existing).Property(e => e.deletedAt).IsModified = true;
-
-        try
-        {
-            await _db.SaveChangesAsync();
-            var userId = User.Identity?.Name ?? "anonymous";
-            _logger.LogInformation("Audit: Operation={Operation} ObjectType={ObjectType} ObjectId={ObjectId} UserId={UserId}", "Restore", "Reservation", existing.reservationId, userId);
-            return Ok(existing);
+            try
+            {
+                await _db.SaveChangesAsync();
+                var userId = User.Identity?.Name ?? "anonymous";
+                _logger.LogInformation("Audit: Operation={Operation} ObjectType={ObjectType} ObjectId={ObjectId} UserId={UserId}", "Restore", "Reservation", existing.reservationId, userId);
+                return Ok(existing);
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "Failed to restore reservation");
+                return StatusCode(500, new { error = "Failed to restore reservation" });
+            }
         }
-        catch (System.Exception ex)
-        {
-            _logger.LogError(ex, "Failed to restore reservation");
-            return StatusCode(500, new { error = "Failed to restore reservation" });
-        }
+        // existing == null -> continue to create/replace logic below
     }
 
     // Replace/create path requires body
@@ -312,6 +310,9 @@ public class ReservationsController : ControllerBase
     {
         try
         {
+            // ensure deletedAt is null for new reservations (client may have sent deletedAt)
+            reservationFromBody.deletedAt = null;
+
             await _db.Reservations.AddAsync(reservationFromBody);
             await _db.SaveChangesAsync();
 

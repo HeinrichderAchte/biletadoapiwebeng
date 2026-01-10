@@ -16,8 +16,7 @@ public class ReservationsDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("public");
-
-        // reservation mapping
+        
         modelBuilder.Entity<Reservation>(r =>
         {
             r.ToTable("reservations");
@@ -28,5 +27,13 @@ public class ReservationsDbContext : DbContext
             r.Property(x => x.roomId).HasColumnName("room_id");
             r.Property(x => x.deletedAt).HasColumnName("deleted_at");
         });
+        
+        modelBuilder.Entity<Room>(r =>
+        {
+            r.ToTable("rooms");
+            r.HasKey(x => x.roomId); 
+            r.Property(x => x.roomId).HasColumnName("id");
+        });
+
     }
 }

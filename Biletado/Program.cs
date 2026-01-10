@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 using System.Text.Json.Serialization;
 using Biletado.Persistence.Contexts;
+using Biletado.Services;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -77,6 +78,7 @@ builder.Services.AddDbContext<AssetsDbContext>(options =>
             .EnableSensitiveDataLogging()
     );
 }
+builder.Services.AddScoped<IReservationService, ReservationService>();
 
 
 try

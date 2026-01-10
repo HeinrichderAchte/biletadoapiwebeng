@@ -21,11 +21,13 @@ public class ReservationsController : ControllerBase
 {
     private readonly ReservationsDbContext _db;
     private readonly ILogger<ReservationsController> _logger;
+    private readonly IReservationService _reservationService;
     
-    public ReservationsController(ReservationsDbContext db, ILogger<ReservationsController> logger)
+    public ReservationsController(ReservationsDbContext db, ILogger<ReservationsController> logger, IReservationService reservationService)
     {
         _db = db;
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _reservationService = reservationService ?? throw new ArgumentNullException(nameof(reservationService));
     }
 
 
@@ -110,7 +112,16 @@ public class ReservationsController : ControllerBase
             }
             else
             {
-                var roomExists = await ReservationService.RoomExists(reservation.roomId.Value);
+                var roomExists = await _reservationService.RoomExists(reservation.roomId.Value);
+                if (!roomExists)
+                {
+                    errors.Add(new ErrorDetail("bad_request", $"roomId {reservation.roomId} does not exist."));
+                }
+            }
+            if (errors.Count > 0)
+            {
+                _logger.LogWarning("Validation errors while creating reservation: {Errors}", errors);
+                return BadRequest(new { errors });
             }
             await _db.Reservations.AddAsync(reservation);
             await _db.SaveChangesAsync();

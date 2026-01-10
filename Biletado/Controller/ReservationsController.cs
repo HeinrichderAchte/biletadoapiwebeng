@@ -179,7 +179,6 @@ public class ReservationsController : ControllerBase
     public async Task<IActionResult> UpdateReservation(
         Guid id,
         [FromQuery(Name = "action")] [SwaggerParameter("Action to perform: 'Replace' (default) or 'Restore' to undelete")] ActionType action = ActionType.Replace,
-        [FromBody] Reservation? reservation = null,
         [FromBody] JsonElement? body = null)
     {
         

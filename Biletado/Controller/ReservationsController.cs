@@ -203,30 +203,43 @@ public class ReservationsController : ControllerBase
         }
     }
 
-    // Treat presence of deletedAt as Restore signal only if the reservation exists.
-    // If it doesn't exist, fall through to create/replace path so a new reservation can be created.
+    // Präsenz von deletedAt nur als Restore behandeln, wenn die Reservierung existiert UND aktuell gelöscht ist.
+    // Wenn die Reservierung existiert aber NICHT gelöscht ist, das Restore-Signal ignorieren und zur Replace/Validation weitergehen.
+    // Wenn die Reservierung nicht existiert, fällt die Anfrage zur Create/Replace-Logik durch.
     if (action == ActionType.Restore || bodyHasDeletedAt)
     {
         if (existing != null)
         {
-            // idempotent: set deletedAt to null (restore) and return the restored entity
-            existing.deletedAt = null;
-            _db.Entry(existing).Property(e => e.deletedAt).IsModified = true;
-
-            try
+            if (existing.deletedAt == null)
             {
-                await _db.SaveChangesAsync();
-                var userId = User.Identity?.Name ?? "anonymous";
-                _logger.LogInformation("Audit: Operation={Operation} ObjectType={ObjectType} ObjectId={ObjectId} UserId={UserId}", "Restore", "Reservation", existing.reservationId, userId);
-                return Ok(existing);
+                if (action == ActionType.Restore)
+                {
+                    // explizites Restore-Action, aber Objekt nicht gelöscht -> Fehler
+                    return BadRequest(new { error = "Reservation is not deleted, cannot restore" });
+                }
+                // bodyHasDeletedAt, aber Objekt ist nicht gelöscht -> IGNORIEREN und weiter zur Replace/Validation
             }
-            catch (System.Exception ex)
+            else
             {
-                _logger.LogError(ex, "Failed to restore reservation");
-                return StatusCode(500, new { error = "Failed to restore reservation" });
+                // existiert und ist gelöscht -> restore durchführen
+                existing.deletedAt = null;
+                _db.Entry(existing).Property(e => e.deletedAt).IsModified = true;
+
+                try
+                {
+                    await _db.SaveChangesAsync();
+                    var userId = User.Identity?.Name ?? "anonymous";
+                    _logger.LogInformation("Audit: Operation={Operation} ObjectType={ObjectType} ObjectId={ObjectId} UserId={UserId}", "Restore", "Reservation", existing.reservationId, userId);
+                    return Ok(existing);
+                }
+                catch (System.Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to restore reservation");
+                    return StatusCode(500, new { error = "Failed to restore reservation" });
+                }
             }
         }
-        // existing == null -> continue to create/replace logic below
+        // existing == null -> weiter zur Create/Replace-Logik (neue Reservierung anlegen)
     }
 
     // Replace/create path requires body

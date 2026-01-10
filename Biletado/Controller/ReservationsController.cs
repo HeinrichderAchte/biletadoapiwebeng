@@ -182,97 +182,99 @@ public class ReservationsController : ControllerBase
         [FromBody] Reservation? reservation = null,
         [FromBody] JsonElement? body = null)
     {
-        var rawAction = HttpContext.Request.Query["action"].FirstOrDefault();
-
         
-        if (!string.IsNullOrEmpty(rawAction) && Enum.TryParse<ActionType>(rawAction, true, out var parsed))
-        {
-            action = parsed;
-            _logger.LogInformation("Parsed action from raw query: {Action}", action);
-        }
-        
-        var existing = await _db.Reservations.FindAsync(id);
-        if (existing == null) return NotFound();
-       
-        bool bodyHasDeletedAt = false;
-        bool deletedAtExplicitNull = false;
-        if (body.HasValue && body.Value.ValueKind != JsonValueKind.Null && body.Value.TryGetProperty("deletedAt", out var deletedAtProp))
-        {
-            bodyHasDeletedAt = true;
-            deletedAtExplicitNull = deletedAtProp.ValueKind == JsonValueKind.Null;
+    var rawAction = HttpContext.Request.Query["action"].FirstOrDefault();
+    _logger.LogInformation("UpdateReservation called. BoundAction={BoundAction} RawQueryAction={RawAction} BodyPresent={BodyPresent}", action, rawAction, body.HasValue);
 
-            // Validator nutzen
-            var validationError = DeletedAtValidator.ValidateJsonProperty(deletedAtProp);
-            if (validationError != null)
-            {
-                return BadRequest(new { error = validationError });
-            }
-        }
+    if (!string.IsNullOrEmpty(rawAction) && Enum.TryParse<ActionType>(rawAction, true, out var parsed))
+    {
+        action = parsed;
+        _logger.LogInformation("Parsed action from raw query: {Action}", action);
+    }
 
-        if (action == ActionType.Replace || bodyHasDeletedAt && deletedAtExplicitNull)
+    var existing = await _db.Reservations.FindAsync(id);
+    if (existing == null) return NotFound();
+
+    bool bodyHasDeletedAt = false;
+    bool deletedAtExplicitNull = false;
+    if (body.HasValue && body.Value.ValueKind != JsonValueKind.Null && body.Value.TryGetProperty("deletedAt", out var deletedAtProp))
+    {
+        bodyHasDeletedAt = true;
+        deletedAtExplicitNull = deletedAtProp.ValueKind == JsonValueKind.Null;
+
+        var validationError = DeletedAtValidator.ValidateJsonProperty(deletedAtProp);
+        if (validationError != null)
         {
-            if (existing.deletedAt == null)
-            {
-                return BadRequest (new {error = "Reservation is not deleted, cannot restore"});
-            }
-            existing.deletedAt = null;
-            _db.Entry(existing).Property(e => e.deletedAt).IsModified = true;
-            try
-            {
-                await _db.SaveChangesAsync();
-                var userId = User.Identity?.Name ?? "anonymous";
-                _logger.LogInformation("Audit: Operation={Operation} ObjectType={ObjectType} ObjectId={ObjectId} UserId={UserId}", "Restore", "Reservation", existing.reservationId, userId);
-                return Ok(existing);
-            }
-            catch (System.Exception ex)
-            {
-                _logger.LogError(ex, "Failed to restore reservation");
-                return StatusCode(500, new { error = "Failed to restore reservation" });
-            }
+            return BadRequest(new { error = validationError });
         }
-        
-        
-        if (!body.HasValue || body.Value.ValueKind == JsonValueKind.Null)
+    }
+
+    // Restore: ?action=Restore OR explicit "deletedAt": null in body
+    if (action == ActionType.Restore || (bodyHasDeletedAt && deletedAtExplicitNull))
+    {
+        if (existing.deletedAt == null)
         {
-            return BadRequest(new { error = "Reservation body is required for replace action" });
-        }
-        Reservation? reservationFromBody = null;
-        try
-        {
-            reservationFromBody = JsonSerializer.Deserialize<Reservation>(body.Value.GetRawText());
-        }
-        catch (System.Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to deserialize reservation body");
-            return BadRequest(new { error = "Invalid reservation body" });
+            return BadRequest(new { error = "Reservation is not deleted, cannot restore" });
         }
 
-        if (reservationFromBody == null) return BadRequest(new { error = "Reservation body is required for replace action" });
-
-        // Replace fields (keep id from route)
-        existing.fromDate = reservationFromBody.fromDate;
-        existing.toDate = reservationFromBody.toDate;
-        existing.roomId = reservationFromBody.roomId;
-
-        // Wenn client deletedAt explizit gesendet hat (gültig geprüft), übernehmen
-        if (bodyHasDeletedAt)
-        {
-            existing.deletedAt = reservationFromBody.deletedAt;
-            _db.Entry(existing).Property(e => e.deletedAt).IsModified = true;
-        }
+        existing.deletedAt = null;
+        _db.Entry(existing).Property(e => e.deletedAt).IsModified = true;
 
         try
         {
             await _db.SaveChangesAsync();
             var userId = User.Identity?.Name ?? "anonymous";
-            _logger.LogInformation("Audit: Operation={Operation} ObjectType={ObjectType} ObjectId={ObjectId} UserId={UserId}", "Replace", "Reservation", existing.reservationId, userId);
+            _logger.LogInformation("Audit: Operation={Operation} ObjectType={ObjectType} ObjectId={ObjectId} UserId={UserId}", "Restore", "Reservation", existing.reservationId, userId);
             return Ok(existing);
         }
         catch (System.Exception ex)
         {
-            _logger.LogError(ex, "Failed to replace reservation");
-            return StatusCode(500, new { error = "Failed to replace reservation" });
+            _logger.LogError(ex, "Failed to restore reservation");
+            return StatusCode(500, new { error = "Failed to restore reservation" });
         }
+    }
+
+    // Replace path requires body
+    if (!body.HasValue || body.Value.ValueKind == JsonValueKind.Null)
+    {
+        return BadRequest(new { error = "Reservation body is required for replace action" });
+    }
+
+    Reservation? reservationFromBody = null;
+    try
+    {
+        reservationFromBody = JsonSerializer.Deserialize<Reservation>(body.Value.GetRawText());
+    }
+    catch (System.Exception ex)
+    {
+        _logger.LogWarning(ex, "Failed to deserialize reservation body");
+        return BadRequest(new { error = "Invalid reservation body" });
+    }
+
+    if (reservationFromBody == null) return BadRequest(new { error = "Reservation body is required for replace action" });
+
+    existing.fromDate = reservationFromBody.fromDate;
+    existing.toDate = reservationFromBody.toDate;
+    existing.roomId = reservationFromBody.roomId;
+
+    if (bodyHasDeletedAt)
+    {
+        existing.deletedAt = reservationFromBody.deletedAt;
+        _db.Entry(existing).Property(e => e.deletedAt).IsModified = true;
+    }
+
+    try
+    {
+        await _db.SaveChangesAsync();
+        var userId = User.Identity?.Name ?? "anonymous";
+        _logger.LogInformation("Audit: Operation={Operation} ObjectType={ObjectType} ObjectId={ObjectId} UserId={UserId}", "Replace", "Reservation", existing.reservationId, userId);
+        return Ok(existing);
+    }
+    catch (System.Exception ex)
+    {
+        _logger.LogError(ex, "Failed to replace reservation");
+        return StatusCode(500, new { error = "Failed to replace reservation" });
+    }
         
     }
 

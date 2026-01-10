@@ -5,6 +5,7 @@ using Biletado.Controller;
 using Xunit;
 using Microsoft.AspNetCore.Mvc;
 using System.Reflection;
+using Biletado.Persistence.Contexts;
 
 namespace UnitTests;
 

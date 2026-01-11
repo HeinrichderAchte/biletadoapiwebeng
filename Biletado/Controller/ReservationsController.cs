@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Authorization;
 using Biletado.DTOs.Response;
 using Biletado.Persistence.Contexts;
 using Biletado.Services;
-using Biletado.Utils;
 using Microsoft.EntityFrameworkCore;
 using Biletado.DTOs.Request;
 

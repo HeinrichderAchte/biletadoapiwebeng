@@ -1,5 +1,6 @@
 ﻿using Biletado.Persistence.Contexts;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace Biletado.Controller;
 
@@ -10,11 +11,14 @@ public class ServicesController : ControllerBase
     private readonly AssetsDbContext _assetsDb;
     private readonly ILogger<ServicesController> _logger;
     private readonly IHttpContextAccessor? _httpContextAccessor;
+    private readonly IamOptions _iamOptions;
 
-    public ServicesController(AssetsDbContext assetsDb, ILogger<ServicesController> logger)
+    public ServicesController(AssetsDbContext assetsDb, ILogger<ServicesController> logger, IHttpContextAccessor httpContextAccessor, IOptions<IamOptions> iamOptions)
     {
         _assetsDb = assetsDb;
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _httpContextAccessor = httpContextAccessor;
+        _iamOptions = iamOptions?.Value ?? new IamOptions();
     }
 
     [HttpGet("status")]
@@ -32,6 +36,7 @@ public class ServicesController : ControllerBase
         {
             authors= new[]{"Henri Weber", "Vivian Heidt"},
             api_version="1.2.0",
+            iam_endpoint = _iamOptions.Endpoint
         });
     }
 

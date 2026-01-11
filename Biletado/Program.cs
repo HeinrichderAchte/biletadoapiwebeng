@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using Biletado.Persistence.Contexts;
 using Biletado.Services;
 using Serilog;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -61,23 +62,54 @@ builder.Services.AddControllers().AddJsonOptions(opts =>
 
 var isDevelopment = builder.Environment.IsDevelopment();
 
-// Databases
-builder.Services.AddDbContext<AssetsDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("AssetsConnection")));
+// Register IHttpContextAccessor for controllers/tests that need the remote IP etc.
+builder.Services.AddHttpContextAccessor();
+
+// Bind IAM options if present
+builder.Services.Configure<IamOptions>(builder.Configuration.GetSection("IAM"));
+
+// Databases: try ConnectionStrings -> Environment variables -> fallback to InMemory for local/dev
+var assetsConn = builder.Configuration.GetConnectionString("AssetsConnection")
+                 ?? builder.Configuration.GetConnectionString("Assets")
+                 ?? Environment.GetEnvironmentVariable("ASSETS_CONNECTION");
+
+if (!string.IsNullOrWhiteSpace(assetsConn))
+{
+    builder.Services.AddDbContext<AssetsDbContext>(options =>
+        options.UseNpgsql(assetsConn));
+}
+else
+{
+    // Fallback to InMemory for development / tests
+    builder.Services.AddDbContext<AssetsDbContext>(options =>
+        options.UseInMemoryDatabase("Assets_Dev"));
+}
 
 {
-    var reservationsConn = builder.Configuration.GetConnectionString("ReservationConnection");
-    if (string.IsNullOrWhiteSpace(reservationsConn))
+    var reservationsConn = builder.Configuration.GetConnectionString("ReservationConnection")
+                          ?? builder.Configuration.GetConnectionString("Reservations")
+                          ?? Environment.GetEnvironmentVariable("RESERVATION_CONNECTION");
+    if (!string.IsNullOrWhiteSpace(reservationsConn))
     {
-        throw new InvalidOperationException("Connection string `ReservationConnection` is not configured.");
+        builder.Services.AddDbContext<ReservationsDbContext>(options =>
+            options
+                .UseNpgsql(reservationsConn)
+                .LogTo(message => Console.WriteLine(message), LogLevel.Information)
+                .EnableSensitiveDataLogging()
+        );
     }
-    builder.Services.AddDbContext<ReservationsDbContext>(options =>
-        options
-            .UseNpgsql(reservationsConn)
-            .LogTo(message => Console.WriteLine(message), LogLevel.Information)
-            .EnableSensitiveDataLogging()
-    );
+    else
+    {
+        // Previously threw if missing; keep app runnable locally by falling back to InMemory and log a warning
+        Console.WriteLine("Warning: ReservationConnection not configured, using InMemory database for ReservationsDbContext.");
+        builder.Services.AddDbContext<ReservationsDbContext>(options =>
+            options
+                .UseInMemoryDatabase("Reservations_Dev")
+                .EnableSensitiveDataLogging()
+        );
+    }
 }
+
 builder.Services.AddScoped<IReservationService, ReservationService>();
 
 
@@ -95,4 +127,3 @@ finally
 {
     Log.CloseAndFlush();
 }
-

@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Mvc;
 using System.Reflection;
 using Biletado.Persistence.Contexts;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Http;
 
 namespace UnitTests;
 
@@ -55,7 +57,9 @@ public class ServicesControllerTests
     {
         using var ctx = CreateInMemoryContext("status_db");
         var logger = NullLogger<ServicesController>.Instance;
-        var controller = new ServicesController(ctx, logger);
+        var httpContextAccessor = new HttpContextAccessor();
+        var iamOptions = Options.Create(new IamOptions { Endpoint = "http://test-iam.local" });
+        var controller = new ServicesController(ctx, logger, httpContextAccessor, iamOptions);
 
         var result = controller.GetStatus();
 
@@ -69,7 +73,9 @@ public class ServicesControllerTests
     {
         using var ctx = CreateInMemoryContext("health_db");
         var logger = NullLogger<ServicesController>.Instance;
-        var controller = new ServicesController(ctx, logger);
+        var httpContextAccessor = new HttpContextAccessor();
+        var iamOptions = Options.Create(new IamOptions { Endpoint = "http://test-iam.local" });
+        var controller = new ServicesController(ctx, logger, httpContextAccessor, iamOptions);
 
         var result = await controller.GetHealth();
 

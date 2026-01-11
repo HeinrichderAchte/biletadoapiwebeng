@@ -16,7 +16,7 @@ namespace Biletado.DTOs.Request
         public DateTime? fromDate { get; set; }
         public DateTime? toDate { get; set; }
         public Guid? roomId { get; set; }
-        public DeletedAtField deletedAt { get; set; } = new DeletedAtField();
+        // Make deletedAt nullable so JSON null does not cause model validation error
+        public DeletedAtField? deletedAt { get; set; } = null;
     }
 }
-

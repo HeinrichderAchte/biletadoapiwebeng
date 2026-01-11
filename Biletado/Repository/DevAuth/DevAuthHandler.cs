@@ -16,7 +16,6 @@ public class DevAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        // Create a simple development principal so [Authorize] works without real tokens
         var claims = new[]
         {
             new Claim(ClaimTypes.NameIdentifier, "dev"),

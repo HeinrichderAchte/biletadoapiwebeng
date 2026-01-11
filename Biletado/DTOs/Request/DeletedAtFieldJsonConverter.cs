@@ -12,7 +12,7 @@ public class DeletedAtFieldJsonConverter : JsonConverter<DeletedAtField>
 
         if (reader.TokenType == JsonTokenType.Null)
         {
-            // explicit null
+          
             return result;
         }
 
@@ -25,7 +25,6 @@ public class DeletedAtFieldJsonConverter : JsonConverter<DeletedAtField>
                 return result;
             }
 
-            // Invalid string -> throw so model binding returns 400 and error message (as before)
             throw new JsonException("deletedAt string is not a valid datetime");
         }
 

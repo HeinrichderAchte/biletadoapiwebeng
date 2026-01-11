@@ -200,30 +200,22 @@ public class ReservationsController : ControllerBase
 
         var existing = await _db.Reservations.FindAsync(id);
 
-        // if no body provided for replace/create -> bad request
         if (dto == null)
         {
             return BadRequest(new { error = "Reservation body is required for replace/create action" });
         }
 
-        // If dto.deletedAt property was present, treat as restore signal only when reservation exists and deleted
-        // Interpret deletedAt presence as restore signal only when it contains a timestamp:
-        // - dto.deletedAt == null -> client did not supply field
-        // - dto.deletedAt != null && dto.deletedAt.Value == null -> explicit null -> treat as restore signal
-        // - dto.deletedAt != null && dto.deletedAt.Value != null -> client supplied a timestamp (not allowed for replace/create)
+
         if (dto.deletedAt != null && dto.deletedAt.Value != null)
         {
-            // timestamp present -> restore signal
             if (existing != null)
             {
                 if (existing.deletedAt == null)
                 {
-                    // reservation exists but not deleted -> cannot restore
                     if (action == ActionType.Restore)
                     {
                         return BadRequest(new { error = "Reservation is not deleted, cannot restore" });
                     }
-                    // else ignore restore signal and continue to replace validation
                 }
                 else
                 {

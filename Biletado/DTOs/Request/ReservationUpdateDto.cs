@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 namespace Biletado.DTOs.Request
 {
     // Helper container that records presence and parsed value of deletedAt
+    [JsonConverter(typeof(DeletedAtFieldJsonConverter))]
     public class DeletedAtField
     {
         public bool Present { get; set; } = false;
@@ -16,7 +17,7 @@ namespace Biletado.DTOs.Request
         public DateTime? fromDate { get; set; }
         public DateTime? toDate { get; set; }
         public Guid? roomId { get; set; }
-        // Make deletedAt nullable so JSON null does not cause model validation error
+        // Keep deletedAt nullable; converter will set Present=true when field supplied (even if null or string)
         public DeletedAtField? deletedAt { get; set; } = null;
     }
 }

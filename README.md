@@ -12,7 +12,7 @@ bietet eine **Rapidoc UI** zur interaktiven API-Dokumentation.
 
 Framework: **ASP.NET Core (.NET)**\
 Service-Port: **9000**\
-Autoren: Henri Weber; Vivian Heidt
+Autoren: Henri Weber; Vivian Heidt\
 Lizenz: MIT (siehe LICENSE)
 
 Ziel der Abgabe ist, dass die API als **Container lauffähig** ist, sich

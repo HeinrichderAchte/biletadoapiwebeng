@@ -2,13 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Biletado.Services;
-using Biletado.Repository;
-using Biletado.Persistence.Contexts;
 using FluentAssertions;
 using Moq;
 using Serilog;
 using Xunit;
+using Biletado.Services;
+using Biletado.Controller;
+using Biletado.Persistence.Contexts; 
+using Biletado.Repository; 
+using Biletado.DTOs.Response;
+using Biletado.DTOs.Request;
 
 namespace Biletado.Api.Reservations.UnitTests
 {

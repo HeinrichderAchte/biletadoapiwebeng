@@ -94,6 +94,7 @@ jobs:
           tags: |
             ghcr.io/${{ env.OWNER }}/biletado:${{ github.sha }}
             ghcr.io/${{ env.OWNER }}/biletado:latest
+            
   tests:
     runs-on: ubuntu-latest
     steps:
@@ -113,9 +114,9 @@ jobs:
       - name: Test
         run: |
           mkdir -p UnitTests/TestResults
-          dotnet test `UnitTests/UnitTests.csproj` -c Release \
+          dotnet test UnitTests/UnitTests.csproj -c Release \
             --logger "trx;LogFileName=test-results.trx" \
-            --results-directory `UnitTests/TestResults`
+            --results-directory UnitTests/TestResults
 
       - name: Upload test results
         if: always()

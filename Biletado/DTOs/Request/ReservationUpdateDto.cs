@@ -16,8 +16,6 @@ namespace Biletado.DTOs.Request
         public DateTime? fromDate { get; set; }
         public DateTime? toDate { get; set; }
         public Guid? roomId { get; set; }
-
-        [JsonConverter(typeof(Biletado.Utils.DeletedAtJsonConverter))]
         public DeletedAtField deletedAt { get; set; } = new DeletedAtField();
     }
 }

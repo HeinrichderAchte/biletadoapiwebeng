@@ -60,7 +60,7 @@ Health-Endpunkte bereit.\
 
 ------------------------------------------------------------------------
 
-# API-Dokumentation
+# Zugriff auf die UI-Testumgebung 
 
 Die API bringt eine integrierte Rapidoc UI mit.
 
@@ -72,14 +72,40 @@ Nach lokalem Start ist sie erreichbar unter:
 
 # Konfiguration
 
-Die Konfiguration erfolgt zur Laufzeit ueber **Umgebungsvariablen** und
-ggf. ueber Kubernetes-Manifeste (Kustomize).
 
-Typische Parameter:
+## Übersicht
+- Konfiguration findet primär in `appsettings.json` / `appsettings.Development.json`.  
+- Produktionswerte sollten über Umgebungsvariablen oder Secret-Mechanismen bereitgestellt werden.  
+- Nested JSON‑Keys werden in Umgebungsvariablen mit doppeltem Unterstrich `__` abgebildet (z.\ B. `ConnectionStrings__Default` → `ConnectionStrings:Default`).
 
-ASPNETCORE_ENVIRONMENT, ASPNETCORE_URLS, LOG_LEVEL, DB_HOST, DB_PORT,
-DB_NAME, DB_USER, DB_PASSWORD
+## Wichtige Umgebungsvariablen
+- `ASPNETCORE_ENVIRONMENT`  
+  - Werte: `Development`, `Production`  
+  - Steuert welches `appsettings.*` geladen wird.
 
+- `ConnectionStrings__Default`  
+  - Beschreibung: Haupt-Datenbank‑Connection‑String.  
+  - Beispiel: `Server=localhost;Database=biletado;User Id=sa;Password=YourP@ss;`
+
+- `Iam__Authority`  
+  - Beschreibung: Authority/Issuer URL des Identity Providers (falls Auth verwendet wird).  
+  - Beispiel: `https://auth.example/`
+
+- `ASPNETCORE_URLS` (optional)  
+  - Beschreibung: Bind‑URLs für Kestrel (z.\ B. `http://+:9090`).  
+  - Alternative: Kestrel‑Konfiguration via `Kestrel__Endpoints__Http__Url`.
+
+- Logging (optional)  
+  - `Logging__LogLevel__Default` — z.\ B. `Information` / `Debug`.
+
+## Beispiele zum Setzen (Windows / PowerShell / CMD / Rider / Docker)
+
+PowerShell (nur aktuelle Session):
+```powershell
+$env:ASPNETCORE_ENVIRONMENT = "Development"
+$env:ConnectionStrings__Default = "Server=localhost;Database=biletado;User Id
+dotnet run --project Biletado\Biletado.csproj 
+```
 ------------------------------------------------------------------------
 
 # Authentifizierung

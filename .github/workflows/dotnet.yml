@@ -1,4 +1,3 @@
-#yaml
 name: CI + Build and publish container
 on:
   push:

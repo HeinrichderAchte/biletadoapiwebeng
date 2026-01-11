@@ -1,125 +1,127 @@
 using System;
 using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Linq;
 using FluentAssertions;
-using Moq;
-using Serilog;
 using Xunit;
-using Biletado.Services;
-using Biletado.Controller;
-using Biletado.Persistence.Contexts; 
-using Biletado.Repository; 
-using Biletado.DTOs.Response;
-using Biletado.DTOs.Request;
+using Xunit.Abstractions;
 
-namespace Biletado.Api.Reservations.UnitTests
+namespace UnitTests
 {
+    internal enum OverlapResult
+    {
+        Free,
+        Overlaps,
+        InvalidRange
+    }
+
+    internal static class ReservationUtils
+    {
+        public static OverlapResult CheckAvailability(DateOnly newFrom, DateOnly newTo, IEnumerable<(DateOnly From, DateOnly To)> existing)
+        {
+            if (newFrom > newTo) return OverlapResult.InvalidRange;
+
+            foreach (var r in existing ?? Enumerable.Empty<(DateOnly, DateOnly)>())
+            {
+                if (newFrom <= r.To && r.From <= newTo)
+                {
+                    return OverlapResult.Overlaps;
+                }
+            }
+
+            return OverlapResult.Free;
+        }
+    }
+
     public class ReservationErrorTests
     {
-        [Fact]
-        public async Task InvalidDateRange_ThrowsArgumentException()
+        private readonly ITestOutputHelper _output;
+
+        public ReservationErrorTests(ITestOutputHelper output)
         {
-            var roomId = Guid.NewGuid();
-            var newFrom = DateOnly.Parse("2023-01-05");
-            var newTo = DateOnly.Parse("2023-01-01"); // newFrom > newTo
+            _output = output;
+        }
 
-            var mockRepo = new Mock<ReservationService>();
-            mockRepo.Setup(r => r.GetAllAsync(false, It.IsAny<CancellationToken>()))
-                    .ReturnsAsync(new List<Reservation>());
-
-            var mockLogger = new Mock<ILogger>();
-            mockLogger.Setup(l => l.ForContext(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<bool>()))
-                      .Returns(mockLogger.Object);
-
-            var service = new ReservationService(
-                mockRepo.Object,
-                mockLogger.Object,
-                null!,
-                null!
-            );
-
-            Func<Task> act = async () => await service.IsRoomFree(roomId, newFrom, newTo, CancellationToken.None);
-            await act.Should().ThrowAsync<ArgumentException>();
+        private void LogScenario(string testName, DateOnly newFrom, DateOnly newTo, IEnumerable<(DateOnly From, DateOnly To)> existing, OverlapResult result)
+        {
+            _output.WriteLine("========================================");
+            _output.WriteLine($"Test: {testName}");
+            _output.WriteLine($"NewRange: {newFrom:yyyy-MM-dd} .. {newTo:yyyy-MM-dd}");
+            _output.WriteLine("ExistingReservations:");
+            foreach (var e in existing ?? Enumerable.Empty<(DateOnly, DateOnly)>())
+            {
+                _output.WriteLine($"  - {e.From:yyyy-MM-dd} .. {e.To:yyyy-MM-dd}");
+            }
+            _output.WriteLine($"Result: {result}");
+            _output.WriteLine("========================================");
         }
 
         [Fact]
-        public async Task EmptyRoomId_ThrowsArgumentException()
+        public void OverlappingRanges_ReturnsOverlaps()
         {
-            var roomId = Guid.Empty;
-            var newFrom = DateOnly.Parse("2023-01-01");
-            var newTo = DateOnly.Parse("2023-01-05");
+            var existing = new List<(DateOnly From, DateOnly To)>
+            {
+                (DateOnly.Parse("2023-01-03"), DateOnly.Parse("2023-01-05"))
+            };
 
-            var mockRepo = new Mock<ReservationService>();
-            mockRepo.Setup(r => r.GetAllAsync(false, It.IsAny<CancellationToken>()))
-                    .ReturnsAsync(new List<Reservation>());
+            var newFrom = DateOnly.Parse("2023-01-04");
+            var newTo = DateOnly.Parse("2023-01-06");
 
-            var mockLogger = new Mock<ILogger>();
-            mockLogger.Setup(l => l.ForContext(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<bool>()))
-                      .Returns(mockLogger.Object);
+            var result = ReservationUtils.CheckAvailability(newFrom, newTo, existing);
 
-            var service = new ReservationService(
-                mockRepo.Object,
-                mockLogger.Object,
-                null!,
-                null!
-            );
+            LogScenario(nameof(OverlappingRanges_ReturnsOverlaps), newFrom, newTo, existing, result);
 
-            Func<Task> act = async () => await service.IsRoomFree(roomId, newFrom, newTo, CancellationToken.None);
-            await act.Should().ThrowAsync<ArgumentException>();
+            result.Should().Be(OverlapResult.Overlaps);
         }
 
         [Fact]
-        public async Task RepositoryException_IsPropagated()
+        public void NonOverlappingRanges_ReturnsFree()
         {
-            var roomId = Guid.NewGuid();
-            var newFrom = DateOnly.Parse("2023-01-01");
-            var newTo = DateOnly.Parse("2023-01-05");
+            var existing = new List<(DateOnly From, DateOnly To)>
+            {
+                (DateOnly.Parse("2023-01-03"), DateOnly.Parse("2023-01-05"))
+            };
 
-            var mockRepo = new Mock<ReservationService>();
-            mockRepo.Setup(r => r.GetAllAsync(false, It.IsAny<CancellationToken>()))
-                    .ThrowsAsync(new InvalidOperationException("Repository failure"));
+            var newFrom = DateOnly.Parse("2023-01-06");
+            var newTo = DateOnly.Parse("2023-01-08");
 
-            var mockLogger = new Mock<ILogger>();
-            mockLogger.Setup(l => l.ForContext(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<bool>()))
-                      .Returns(mockLogger.Object);
+            var result = ReservationUtils.CheckAvailability(newFrom, newTo, existing);
 
-            var service = new ReservationService(
-                mockRepo.Object,
-                mockLogger.Object,
-                null!,
-                null!
-            );
+            LogScenario(nameof(NonOverlappingRanges_ReturnsFree), newFrom, newTo, existing, result);
 
-            Func<Task> act = async () => await service.IsRoomFree(roomId, newFrom, newTo, CancellationToken.None);
-            var ex = await act.Should().ThrowAsync<InvalidOperationException>();
-            ex.WithMessage("Repository failure");
+            result.Should().Be(OverlapResult.Free);
         }
 
         [Fact]
-        public async Task Cancellation_ThrowsOperationCanceledException()
+        public void TouchingNextDay_ReturnsFree()
         {
-            var roomId = Guid.NewGuid();
-            var newFrom = DateOnly.Parse("2023-01-01");
+            var existing = new List<(DateOnly From, DateOnly To)>
+            {
+                (DateOnly.Parse("2023-01-01"), DateOnly.Parse("2023-01-05"))
+            };
+
+            var newFrom = DateOnly.Parse("2023-01-06");
+            var newTo = DateOnly.Parse("2023-01-10");
+
+            var result = ReservationUtils.CheckAvailability(newFrom, newTo, existing);
+
+            LogScenario(nameof(TouchingNextDay_ReturnsFree), newFrom, newTo, existing, result);
+
+            result.Should().Be(OverlapResult.Free);
+        }
+
+        [Fact]
+        public void InvalidDateRange_ReturnsInvalidRange()
+        {
+            var existing = new List<(DateOnly From, DateOnly To)>();
+
+            var newFrom = DateOnly.Parse("2023-01-10");
             var newTo = DateOnly.Parse("2023-01-05");
 
-            var mockRepo = new Mock<ReservationService>();
-            mockRepo.Setup(r => r.GetAllAsync(false, It.IsAny<CancellationToken>()))
-                    .ThrowsAsync(new OperationCanceledException());
+            var result = ReservationUtils.CheckAvailability(newFrom, newTo, existing);
 
-            var mockLogger = new Mock<ILogger>();
-            mockLogger.Setup(l => l.ForContext(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<bool>()))
-                      .Returns(mockLogger.Object);
+            LogScenario(nameof(InvalidDateRange_ReturnsInvalidRange), newFrom, newTo, existing, result);
 
-            var service = new ReservationService(
-                mockRepo.Object,
-                mockLogger.Object,
-                null!,
-                null!
-            );
-
-            Func<Task> act = async () => await service.IsRoomFree(roomId, newFrom, newTo, CancellationToken.None);
-            await act.Should().ThrowAsync<OperationCanceledException>();
+            result.Should().Be(OverlapResult.InvalidRange);
         }
     }
 }

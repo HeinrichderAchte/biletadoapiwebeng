@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Biletado.Services;
-using Biletado.Respositories;
+using Biletado.Respository;
 using Biletado.Persistence.Contexts;
 using FluentAssertions;
 using Moq;

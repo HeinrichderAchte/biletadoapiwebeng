@@ -24,7 +24,7 @@ namespace Biletado.Api.Reservations.UnitTests
             var newFrom = DateOnly.Parse("2023-01-05");
             var newTo = DateOnly.Parse("2023-01-01"); // newFrom > newTo
 
-            var mockRepo = new Mock<IReservationRepository>();
+            var mockRepo = new Mock<ReservationService>();
             mockRepo.Setup(r => r.GetAllAsync(false, It.IsAny<CancellationToken>()))
                     .ReturnsAsync(new List<Reservation>());
 
@@ -50,7 +50,7 @@ namespace Biletado.Api.Reservations.UnitTests
             var newFrom = DateOnly.Parse("2023-01-01");
             var newTo = DateOnly.Parse("2023-01-05");
 
-            var mockRepo = new Mock<IReservationRepository>();
+            var mockRepo = new Mock<ReservationService>();
             mockRepo.Setup(r => r.GetAllAsync(false, It.IsAny<CancellationToken>()))
                     .ReturnsAsync(new List<Reservation>());
 
@@ -76,7 +76,7 @@ namespace Biletado.Api.Reservations.UnitTests
             var newFrom = DateOnly.Parse("2023-01-01");
             var newTo = DateOnly.Parse("2023-01-05");
 
-            var mockRepo = new Mock<IReservationRepository>();
+            var mockRepo = new Mock<ReservationService>();
             mockRepo.Setup(r => r.GetAllAsync(false, It.IsAny<CancellationToken>()))
                     .ThrowsAsync(new InvalidOperationException("Repository failure"));
 
@@ -103,7 +103,7 @@ namespace Biletado.Api.Reservations.UnitTests
             var newFrom = DateOnly.Parse("2023-01-01");
             var newTo = DateOnly.Parse("2023-01-05");
 
-            var mockRepo = new Mock<IReservationRepository>();
+            var mockRepo = new Mock<ReservationService>();
             mockRepo.Setup(r => r.GetAllAsync(false, It.IsAny<CancellationToken>()))
                     .ThrowsAsync(new OperationCanceledException());
 

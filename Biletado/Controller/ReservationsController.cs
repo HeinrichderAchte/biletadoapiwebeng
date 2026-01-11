@@ -207,53 +207,44 @@ public class ReservationsController : ControllerBase
         }
 
         // If dto.deletedAt property was present, treat as restore signal only when reservation exists and deleted
-        // Interpret deletedAt presence:
+        // Interpret deletedAt presence as restore signal only when it contains a timestamp:
         // - dto.deletedAt == null -> client did not supply field
         // - dto.deletedAt != null && dto.deletedAt.Value == null -> explicit null -> treat as restore signal
         // - dto.deletedAt != null && dto.deletedAt.Value != null -> client supplied a timestamp (not allowed for replace/create)
-        if (dto.deletedAt != null)
+        if (dto.deletedAt != null && dto.deletedAt.Value != null)
         {
-            if (dto.deletedAt.Value != null)
+            // timestamp present -> restore signal
+            if (existing != null)
             {
-                // Clients are not allowed to set a concrete deletedAt timestamp
-                return BadRequest(new { error = "deletedAt must be null for restore or omitted for replace/create; clients may not set a timestamp." });
-            }
-
-            // dto.deletedAt.Value == null -> explicit null -> treat as restore signal
-            if (dto.deletedAt.Value == null)
-            {
-                if (existing != null)
+                if (existing.deletedAt == null)
                 {
-                    if (existing.deletedAt == null)
+                    // reservation exists but not deleted -> cannot restore
+                    if (action == ActionType.Restore)
                     {
-                        // reservation exists but not deleted -> do not restore, proceed with validation/replace
-                        if (action == ActionType.Restore)
-                        {
-                            return BadRequest(new { error = "Reservation is not deleted, cannot restore" });
-                        }
-                        // else ignore restore signal and continue to replace validation
+                        return BadRequest(new { error = "Reservation is not deleted, cannot restore" });
                     }
-                    else
+                    // else ignore restore signal and continue to replace validation
+                }
+                else
+                {
+                    // restore existing (set deletedAt to null)
+                    existing.deletedAt = null;
+                    _db.Entry(existing).Property(e => e.deletedAt).IsModified = true;
+                    try
                     {
-                        // restore existing
-                        existing.deletedAt = null;
-                        _db.Entry(existing).Property(e => e.deletedAt).IsModified = true;
-                        try
-                        {
-                            await _db.SaveChangesAsync();
-                            var userId = User.Identity?.Name ?? "anonymous";
-                            _logger.LogInformation("Audit: Operation={Operation} ObjectType={ObjectType} ObjectId={ObjectId} UserId={UserId}", "Restore", "Reservation", existing.reservationId, userId);
-                            return Ok(existing);
-                        }
-                        catch (System.Exception ex)
-                        {
-                            _logger.LogError(ex, "Failed to restore reservation");
-                            return StatusCode(500, new { error = "Failed to restore reservation" });
-                        }
+                        await _db.SaveChangesAsync();
+                        var userId = User.Identity?.Name ?? "anonymous";
+                        _logger.LogInformation("Audit: Operation={Operation} ObjectType={ObjectType} ObjectId={ObjectId} UserId={UserId}", "Restore", "Reservation", existing.reservationId, userId);
+                        return Ok(existing);
+                    }
+                    catch (System.Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to restore reservation");
+                        return StatusCode(500, new { error = "Failed to restore reservation" });
                     }
                 }
-                // if existing == null => fall through to create/replace logic (allow creation)
             }
+            // if existing == null => fall through to create/replace logic (allow creation)
         }
 
         // At this point handle replace/create

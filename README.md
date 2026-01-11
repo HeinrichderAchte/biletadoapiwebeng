@@ -8,7 +8,7 @@ Backend-Implementierung einer REST-API im Rahmen der Aufgabenstellung
 
 Der Service stellt eine HTTP-basierte Schnittstelle bereit, integriert
 sich in die vorgegebene **Biletado-Kubernetes-Entwicklungsumgebung** und
-bietet eine **Swagger UI** zur interaktiven API-Dokumentation.
+bietet eine **Rapidoc UI** zur interaktiven API-Dokumentation.
 
 Framework: **ASP.NET Core (.NET)**\
 Service-Port: **9000**\
@@ -41,27 +41,26 @@ spezifiziert reagiert.
 
 Die API stellt fachliche REST-Endpunkte sowie Status- und
 Health-Endpunkte bereit.\
-Die vollstaendige und stets aktuelle Dokumentation ist ueber **Rapidoc** abrufbar.
 
 ## Status / Health
 
--   `GET /health`\
--   `GET /health/live`\
--   `GET /health/ready`
+-   `GET api/v3/reservations/status`\
+-   `GET api/v3/reservations/healt`\
+-   `GET api/v3/reservations/live`\
+-   `GET api/v3/reservations/ready`
 
-## Fachliche API
+## Reservations API
 
-(Beispiele -- exakte Routen sind in Swagger dokumentiert)
 
--   `GET /api/...` -- Lesen von Ressourcen\
--   `GET /api/.../{id}` -- Einzelressource\
--   `POST /api/...` -- Anlegen\
--   `PUT /api/.../{id}` -- Aktualisieren\
--   `DELETE /api/.../{id}` -- Loeschen
+-   `GET /api/...` -- Lesen von allen Reservierungen\
+-   `POST /api/.../{id}` -- anlegen einer Reservierung\
+-   `GET /api/...` -- Reservierung anhand einer ID lesen\
+-   `PUT /api/.../{id}` -- Aktualisieren / Widerherstellen einer Reservierung\
+-   `DELETE /api/.../{id}` -- Soft Delete/ Hard Delete einer Reservierung 
 
 ------------------------------------------------------------------------
 
-# Swagger / API-Dokumentation
+# API-Dokumentation
 
 Die API bringt eine integrierte Rapidoc UI mit.
 
@@ -97,10 +96,13 @@ JWT-Validierung moeglich ist.
 
 # Code-Ueberblick
 
--   `Program.cs` -- Einstiegspunkt, Konfiguration, Middleware, Swagger\
+-   `Program.cs` -- Einstiegspunkt, Konfiguration, Middleware\
 -   `Controllers/` -- REST-Endpunkte, Request-Handling, Validierung\
--   `Models/` -- Datenmodelle / DTOs\
--   `Services/` -- Business-Logik (falls vorhanden)
+-   `DTOs/` -- Data Transfer Objects\
+-   `Models/` -- Datenmodelle der Reservierungen, Räume etc.\
+-   `Persistence/Context/` -- Datenbankmapping\
+-   `Repository/DevAuth/` -- Authentifizierung (momentan noch unvollständig)
+-   `Services/` -- Business-Logik
 
 ------------------------------------------------------------------------
 
